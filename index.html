@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Sistema de Apoyo Quirúrgico — Demo</title>
+  <link rel="stylesheet" href="styles.css">
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+</head>
+
+<body>
+ <header class="top-header">
+  <div class="logo-container">
+    <div class="logo-circle"></div>
+    <div class="logo-text">
+      <h1>VITALIA-WEB</h1>
+      <p>Plataforma Quirúrgica Digital</p>
+    </div>
+  </div>
+
+
+    <div class="top-right">
+      <div class="chip" id="chipSession">🔒 Sin sesión</div>
+      <button class="btn" id="btnLogout" type="button" disabled>Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sideHead">
+        <div class="sideBrand">
+          <div class="sideLogo" aria-hidden="true"></div>
+          <div>
+            <div class="sideName">Apoyo IQ</div>
+            <div class="sideMeta" id="sideMeta">Acceso institucional</div>
+          </div>
+        </div>
+
+        <div class="userBox" id="userBox">
+          <div class="userLine"><span class="muted">Usuario:</span> <strong id="uName">—</strong></div>
+          <div class="userLine"><span class="muted">Rol:</span> <strong id="uRole">—</strong></div>
+        </div>
+      </div>
+
+      <nav class="menu" id="menu">
+        <!-- se llena por JS según rol -->
+      </nav>
+
+      <div class="sideFoot">
+        <div class="muted">v1.0 demo · 2026</div>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <section class="content">
+      <!-- LOGIN -->
+      <section class="view" id="view-login">
+        <div class="card">
+          <div class="cardHead">
+            <h1>Acceso al sistema</h1>
+            <p>Ingreso con usuario y contraseña. El administrador habilita usuarios según perfil.</p>
+          </div>
+          <div class="cardBody">
+            <div class="grid2">
+              <div class="field">
+                <label>Usuario</label>
+                <input id="inpUser" placeholder="Ej: admin / planta.demo" autocomplete="username">
+              </div>
+              <div class="field">
+                <label>Contraseña</label>
+                <input id="inpPass" type="password" placeholder="••••••••" autocomplete="current-password">
+              </div>
+            </div>
+            <div class="row">
+              <button class="btn primary" id="btnLogin" type="button">Ingresar</button>
+              <button class="btn" id="btnDemoAdmin" type="button">Demo Admin</button>
+              <button class="btn ghost" id="btnForgot" type="button">¿Olvidaste tu contraseña?</button>
+            </div>
+
+            <div class="note">
+              Admin demo: <span class="mono">admin</span> / <span class="mono">admin123</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- INICIO -->
+      <section class="view hidden" id="view-home">
+        <div class="pageTitle">
+          <h1>Inicio</h1>
+          <p>Seleccione un módulo desde el menú lateral.</p>
+        </div>
+
+        <div class="cards3">
+          <div class="card">
+            <div class="cardHead">
+              <h2>Secuencia segura</h2>
+              <p>En perfil profesional, primero se registran datos del paciente.</p>
+            </div>
+            <div class="cardBody">
+              <ul class="ul">
+                <li>Datos del paciente obligatorios</li>
+                <li>Checklist por momentos y roles</li>
+                <li>Registro y trazabilidad automática</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="cardHead">
+              <h2>Privacidad por rol</h2>
+              <p>El acceso se limita según perfil habilitado.</p>
+            </div>
+            <div class="cardBody">
+              <ul class="ul">
+                <li>Admin: usuarios y auditoría</li>
+                <li>Estudiante: biblioteca (lectura)</li>
+                <li>Profesional: paciente y checklist</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="cardHead">
+              <h2>Estado del procedimiento</h2>
+              <p>Panel de estado para mantener control.</p>
+            </div>
+            <div class="cardBody">
+              <div class="kpi">
+                <div><span class="muted">Paciente</span><div id="kpiPatient">—</div></div>
+                <div><span class="muted">Checklist</span><div id="kpiChecklist">0%</div></div>
+                <div><span class="muted">Firmas</span><div id="kpiSign">0/4</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADMIN -->
+      <section class="view hidden" id="view-admin">
+        <div class="pageTitle">
+          <h1>Gestión de usuarios</h1>
+          <p>Crear, habilitar/deshabilitar y restablecer contraseña (demo local).</p>
+        </div>
+
+        <div class="card">
+          <div class="cardHead">
+            <h2>Crear usuario</h2>
+            <p>Asignación de perfil y contraseña inicial.</p>
+          </div>
+          <div class="cardBody">
+            <div class="grid3">
+              <div class="field">
+                <label>Usuario</label>
+                <input id="newUser" placeholder="Ej: romina.loayza">
+              </div>
+              <div class="field">
+                <label>Contraseña inicial</label>
+                <input id="newPass" placeholder="Ej: demo123">
+              </div>
+              <div class="field">
+                <label>Perfil</label>
+                <select id="newRole">
+                  <option value="estudiante">Estudiante</option>
+                  <option value="estudiante_rotante">Estudiante (Rotante)</option>
+                  <option value="profesional_planta">Profesional – Planta</option>
+                  <option value="profesional_visitante">Profesional – Visitante</option>
+                </select>
+              </div>
+            </div>
+            <div class="row">
+              <button class="btn primary" id="btnCreateUser" type="button">Crear</button>
+              <button class="btn" id="btnSeed" type="button">Crear usuarios demo</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardHead">
+            <h2>Usuarios habilitados</h2>
+            <p>Administración básica.</p>
+          </div>
+          <div class="cardBody">
+            <div id="usersList" class="list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PACIENTE -->
+      <section class="view hidden" id="view-paciente">
+        <div class="pageTitle">
+          <h1>Datos del paciente</h1>
+          <p>Registro obligatorio previo al procedimiento. Se habilita el checklist tras guardar.</p>
+        </div>
+
+        <div class="twoCol">
+          <div class="card">
+            <div class="cardHead">
+              <h2>Identificación</h2>
+              <p>Campos mínimos para el procedimiento.</p>
+            </div>
+            <div class="cardBody">
+              <div class="grid2">
+                <div class="field">
+                  <label>Apellido y nombre *</label>
+                  <input id="p_name" placeholder="Ej: Pérez, Ana">
+                </div>
+                <div class="field">
+                  <label>Historia clínica *</label>
+                  <input id="p_hc" placeholder="Ej: 123456">
+                </div>
+                <div class="field">
+                  <label>Procedimiento *</label>
+                  <input id="p_proc" placeholder="Ej: Colecistectomía laparoscópica">
+                </div>
+                <div class="field">
+                  <label>Servicio / especialidad</label>
+                  <input id="p_serv" placeholder="Ej: Cirugía general">
+                </div>
+              </div>
+
+              <div class="row">
+                <button class="btn primary" id="btnSavePatient" type="button">Guardar y habilitar procedimiento</button>
+                <span class="okText hidden" id="savedMsg">✅ Guardado</span>
+              </div>
+
+              <div class="note">
+                * Obligatorio para habilitar Checklist / Conteo / Registro.
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="cardHead">
+              <h2>Estado del procedimiento</h2>
+              <p>Resumen en tiempo real.</p>
+            </div>
+            <div class="cardBody">
+              <div class="stateBox">
+                <div class="stateRow"><span class="muted">Paciente</span><strong id="st_patient">—</strong></div>
+                <div class="stateRow"><span class="muted">Checklist</span><strong id="st_check">0%</strong></div>
+                <div class="stateRow"><span class="muted">Firmas</span><strong id="st_sign">0/4</strong></div>
+                <div class="stateRow"><span class="muted">Última acción</span><strong id="st_last">—</strong></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHECKLIST -->
+      <section class="view hidden" id="view-checklist">
+        <div class="pageTitle">
+          <h1>Checklist de seguridad quirúrgica</h1>
+          <p>Organizado por momentos y secciones según rol. Genera trazabilidad automática.</p>
+        </div>
+
+        <!-- Contexto paciente + búsqueda -->
+        <div class="card">
+          <div class="cardBody">
+            <div class="bar">
+              <div>
+                <div class="muted">Paciente seleccionado</div>
+                <div class="barStrong" id="ctx_patient">—</div>
+              </div>
+
+              <div class="barSearch">
+                <div class="field" style="margin:0">
+                  <label>Buscar por HC / Apellido</label>
+                  <input id="searchPatient" placeholder="Ej: 123456 o Pérez">
+                </div>
+                <button class="btn" id="btnSearchPatient" type="button">Buscar</button>
+              </div>
+            </div>
+
+            <div class="warnBox hidden" id="warnNeedPatient">
+              Para ingresar al checklist debe existir un paciente registrado (Datos del paciente).
+            </div>
+          </div>
+        </div>
+
+        <div class="twoCol">
+          <!-- Checklist main -->
+          <div class="card">
+            <div class="cardHead">
+              <h2>Momentos</h2>
+              <p>Complete los ítems. El sistema registra fecha/hora por acción.</p>
+            </div>
+            <div class="cardBody" id="checklistContainer">
+              <!-- se genera por JS -->
+            </div>
+          </div>
+
+          <!-- Estado -->
+          <div class="card">
+            <div class="cardHead">
+              <h2>Estado</h2>
+              <p>Resumen del procedimiento.</p>
+            </div>
+            <div class="cardBody">
+              <div class="stateBox">
+                <div class="stateRow"><span class="muted">Progreso</span><strong id="sum_progress">0%</strong></div>
+                <div class="stateRow"><span class="muted">Momento actual</span><strong id="sum_moment">—</strong></div>
+                <div class="stateRow"><span class="muted">Firmas</span><strong id="sum_sign">0/4</strong></div>
+                <div class="stateRow"><span class="muted">Observaciones</span><strong id="sum_obs">—</strong></div>
+              </div>
+
+              <div class="hr"></div>
+
+              <div class="field">
+                <label>Acciones recientes (trazabilidad)</label>
+                <textarea id="logBox" readonly></textarea>
+              </div>
+
+              <div class="row">
+                <button class="btn" id="btnExportLog" type="button">Exportar registro .txt</button>
+                <button class="btn danger" id="btnResetChecklist" type="button">Reiniciar checklist</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BIBLIOTECA (placeholder) -->
+      <section class="view hidden" id="view-biblioteca">
+        <div class="pageTitle">
+          <h1>Biblioteca (lectura)</h1>
+          <p>Sección para estudiantes: PDFs y protocolos en modo lectura.</p>
+        </div>
+
+        <div class="card">
+          <div class="cardHead">
+            <h2>Materiales</h2>
+            <p>Placeholders. Luego se agregan enlaces o archivos.</p>
+          </div>
+          <div class="cardBody">
+            <div class="list" id="pdfList"></div>
+          </div>
+        </div>
+      </section>
+
+    </section>
+  </main>
+
+  <!-- Modal -->
+  <div class="overlay hidden" id="overlay">
+    <div class="modal">
+      <div class="modalHead">
+        <strong id="mTitle">Detalle</strong>
+        <button class="btn" id="btnCloseModal" type="button">Cerrar</button>
+      </div>
+      <div class="modalBody" id="mBody"></div>
+    </div>
+  </div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+ const firebaseConfig = {
+  apiKey: "AIzaSyD...REAL",
+  authDomain: "vitalia-007.firebaseapp.com",
+  projectId: "vitalia-007",
+  storageBucket: "vitalia-007.appspot.com",
+  messagingSenderId: "10987654321",
+  appId: "1:10987654321:web:abc123"
+};
+
+  firebase.initializeApp(firebaseConfig);
+  window.db = firebase.firestore();
+</script>
+
+<!-- Tu lógica -->
+<script src="app.js"></script>
+</body>
+</html>

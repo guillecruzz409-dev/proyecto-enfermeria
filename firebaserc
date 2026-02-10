@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "vitalia-007"
+  },
+  "targets": {
+    "vitalia-007": {
+      "hosting": {
+        "vitalia": [
+          "vitalia-007"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
